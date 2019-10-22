@@ -1,0 +1,148 @@
+// primary: hsla(265, 100%, 47%, 1.00)
+// secondary: hsla(180, 100%, 27%, 1.00)
+// on-primary: hsla(104, 100%, 100%, 1.00)
+// on-surface: hsla(0, 0%, 0%, 1.00)
+
+$theme-map: (
+  primary: (
+    hue: 265,
+    saturation: 100%,
+    luminance: 47%,
+    alpha: 1,
+  ),
+  secondary: (
+    hue: 180,
+    saturation: 100%,
+    luminance: 27%,
+    alpha: 1,
+  ),
+  on-primary: (
+    hue: 104,
+    saturation: 100%,
+    luminance: 100%,
+    alpha: 1,
+  ),
+  on-surface: (
+    hue: 0,
+    saturation: 0%,
+    luminance: 0%,
+    alpha: 1,
+  ),
+);
+
+$primary: (
+  hue: 11,
+  saturation: 12,
+  luminance: 13,
+  alpha: 100,
+);
+$secondary: (
+  hue: 21,
+  saturation: 22,
+  luminance: 23,
+  alpha: 100,
+);
+$on-primary: (
+  hue: 31,
+  saturation: 32,
+  luminance: 33,
+  alpha: 100
+);
+
+@mixin theme-prop($property, $color) {
+  #{$property}: get-hsla($color);
+  #{$property}: get-css-var($color);
+}
+
+@function get-hsla($color) {
+  $overrides: map-get($color, overrides) or ();
+  $base-color: map-get($color, base);
+  $base-color-value: map-get($theme-map, $base-color);
+  $with-overrides: map-merge($base-color-value, $overrides);
+
+  $adjustments: map-get($color, adjustments) or ();
+  $hue-adjustment: map-get($adjustments, hue) or 0;
+  $saturation-adjustment: map-get($adjustments, saturation) or 0;
+  $luminance-adjustment: map-get($adjustments, luminance) or 0;
+  $alpha-adjustment: map-get($adjustments, alpha) or 0;
+
+  $hue: map-get($with-overrides, hue) + $hue-adjustment;
+  $saturation: map-get($with-overrides, saturation) + $saturation-adjustment;
+  $luminance: map-get($with-overrides, luminance) + $luminance-adjustment;
+  $alpha: map-get($with-overrides, alpha) + $alpha-adjustment;
+
+  @return unquote("hsla(#{$hue}, #{$saturation}, #{$luminance}, #{$alpha})");
+}
+
+@mixin unpack-css-vars {
+  @each $key, $value in $theme-map {
+    @include set-css-var($key, $value);
+  }
+}
+
+@mixin set-css-var($key, $color-value) {
+  --mdc-#{$key}-h: #{map-get($color-value, hue)};
+  --mdc-#{$key}-s: #{map-get($color-value, saturation)};
+  --mdc-#{$key}-l: #{map-get($color-value, luminance)};
+  --mdc-#{$key}-a: #{map-get($color-value, alpha)};
+}
+
+@function get-css-var($color) {
+  $base-color: map-get($color, base);
+  $overrides: map-get($color, overrides) or ();
+  $adjustments: map-get($color, adjustments) or ();
+
+  $hue: #{var(--mdc-#{$base-color}-h)};
+  @if map-has-key($overrides, hue) {
+    $hue: map-get($overrides, hue);
+  }
+  @if map-has-key($adjustments, hue) {
+    $hue-adjustment: map-get($adjustments, hue);
+    @if $hue-adjustment > 0 {
+      $hue: #{calc(var(--mdc-#{$base-color}-h) + #{$hue-adjustment})};
+    } @else if $hue-adjustment < 0 {
+      $hue: #{calc(var(--mdc-#{$base-color}-h) - #{abs($hue-adjustment)})};
+    }
+  }
+
+  $saturation: #{var(--mdc-#{$base-color}-s)};
+  @if (map-has-key($overrides, saturation)) {
+    $saturation: map-get($overrides, saturation);
+  }
+  @if map-has-key($adjustments, saturation) {
+    $saturation-adjustment: map-get($adjustments, saturation);
+    @if $saturation-adjustment > 0 {
+      $saturation: #{calc(var(--mdc-#{$base-color}-s) + #{$saturation-adjustment})};
+    } @else if $hue-adjustment < 0 {
+      $saturation: #{calc(var(--mdc-#{$base-color}-s) - #{abs($saturation-adjustment)})};
+    }
+  }
+
+  $luminance: #{var(--mdc-#{$base-color}-l)};
+  @if (map-has-key($overrides, luminance)) {
+    $luminance: map-get($overrides, luminance);
+  }
+  @if map-has-key($adjustments, luminance) {
+    $luminance-adjustment: map-get($adjustments, luminance);
+    @if $luminance-adjustment > 0 {
+      $luminance: #{calc(var(--mdc-#{$base-color}-l) + #{$luminance-adjustment})};
+    } @else if $luminance-adjustment < 0 {
+      $luminance: #{calc(var(--mdc-#{$base-color}-l) - #{abs($luminance-adjustment)})};
+    }
+  }
+
+  $alpha: #{var(--mdc-#{$base-color}-a)};
+  @if (map-has-key($overrides, alpha)) {
+    $alpha: map-get($overrides, alpha);
+  }
+  @if map-has-key($adjustments, alpha) {
+    $alpha-adjustment: map-get($adjustments, alpha);
+    @if $alpha-adjustment > 0 {
+      $alpha: #{calc(var(--mdc-#{$base-color}-a) + $alpha)};
+    } @else if $alpha-adjustment < 0 {
+      $alpha: #{calc(var(--mdc-#{$base-color}-a) - $alpha)};
+    }
+  }
+
+  @return unquote("hsla(#{$hue}, #{$saturation}, #{$luminance}, #{$alpha})");
+}
